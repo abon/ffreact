@@ -21,8 +21,8 @@ export default function Home() {
   const [trimIsProcessing, setTrimIsProcessing] = useState(false);
   const [videoMeta, setVideoMeta] = useState<any>(null);
   const [URL, setURL] = useState<any>(null);
-  const [rStart, setRstart] = useState(0); // 0%
-  const [rEnd, setRend] = useState(10); // 10%
+  const [rStart, setRstart] = useState(0);
+  const [rEnd, setRend] = useState(10);
 
   const [thumbnails, setThumbnails] = useState([]);
   const [thumbnailIsProcessing, setThumbnailIsProcessing] = useState(false);
@@ -34,8 +34,7 @@ export default function Home() {
     ffmpeg.on("log", ({ message }) => {
       if (messageRef.current) messageRef.current.innerHTML = message;
     });
-    // toBlobURL is used to bypass CORS issue, urls with the same
-    // domain can be used directly.
+
     await ffmpeg.load({
       coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
       wasmURL: await toBlobURL(
@@ -79,15 +78,10 @@ export default function Home() {
     setURL(await helpers.readFileAsBase64(file));
   };
 
-  const getThumbnails = async ({
-    duration,
-  }: {
-    duration: number;
-  }): Promise<string[]> => {
-    const arrayOfImageURIs: string[] = [];
-    const MAX_NUMBER_OF_IMAGES = 15;
-    const NUMBER_OF_IMAGES = Math.min(duration, MAX_NUMBER_OF_IMAGES);
-    const offset = Math.ceil(duration / NUMBER_OF_IMAGES);
+  const generateThumbnails = async ({ duration }: { duration: number }) => {
+    const maxImages = 15;
+    const imagesCount = Math.min(duration, maxImages);
+    const interval = Math.ceil(duration / imagesCount);
 
     const ffmpeg = ffmpegRef.current;
     setThumbnailIsProcessing(true);
@@ -95,36 +89,36 @@ export default function Home() {
       inputVideoFile.name,
       await fetchFile(inputVideoFile)
     );
+
+    const thumbnails = [];
     try {
-      for (let i = 0; i < NUMBER_OF_IMAGES; i++) {
-        const startTimeInSecs = helpers.toTimeString(Math.round(i * offset));
-        const nextTimeInSecs = helpers.toTimeString(
-          Math.round((i + 1) * offset)
-        );
+      for (let i = 0; i < imagesCount; i++) {
+        const startTime = helpers.toTimeString(i * interval);
+        const endTime = helpers.toTimeString((i + 1) * interval);
 
         await ffmpeg.exec([
           "-ss",
-          startTimeInSecs,
+          startTime,
           "-i",
           inputVideoFile.name,
           "-t",
-          "00:00:1.000",
+          endTime,
           "-vf",
-          `scale=150:-1`,
+          "scale=150:-1",
           `img${i}.png`,
         ]);
 
         const data: any = ffmpeg.readFile(`img${i}.png`);
         const blob: any = new Blob([data.buffer], { type: "image/png" });
-        const dataURI: any = await helpers.readFileAsBase64(blob);
-        arrayOfImageURIs.push(dataURI);
-        // await ffmpeg.deleteFile(`img${i}.png`);
+
+        thumbnails.push(await helpers.readFileAsBase64(blob));
       }
     } catch (error) {
       console.error(error);
     }
+
     setThumbnailIsProcessing(false);
-    return arrayOfImageURIs;
+    return thumbnails;
   };
 
   const handleLoadedData = async (e: any) => {
@@ -138,19 +132,15 @@ export default function Home() {
     console.log({ meta });
     setVideoMeta(meta);
 
-    const thumbnails: any = await getThumbnails(meta);
+    const thumbnails: any = await generateThumbnails(meta);
     setThumbnails(thumbnails);
   };
 
-  const handleTrim = async () => {
+  const trimVideo = async () => {
     const ffmpeg = ffmpegRef.current;
     setTrimIsProcessing(true);
-    let startTime: any | number = ((rStart / 100) * videoMeta.duration).toFixed(
-      2
-    );
-    let offset: any = ((rEnd / 100) * videoMeta.duration - startTime).toFixed(
-      2
-    );
+    const start = (rStart / 100) * videoMeta.duration;
+    const duration = (rEnd / 100) * videoMeta.duration - start;
 
     try {
       await ffmpeg.writeFile(
@@ -159,18 +149,17 @@ export default function Home() {
       );
       await ffmpeg.exec([
         "-ss",
-        helpers.toTimeString(startTime),
+        helpers.toTimeString(start),
         "-i",
         inputVideoFile.name,
         "-t",
-        helpers.toTimeString(offset),
+        helpers.toTimeString(duration),
         "-c:v",
         "copy",
         "ping.mp4",
       ]);
       const data = (await ffmpeg.readFile("ping.mp4")) as any;
-      console.log(data);
-      const dataURL: any = await helpers.readFileAsBase64(
+      const dataURL = await helpers.readFileAsBase64(
         new Blob([data.buffer], { type: "video/mp4" })
       );
       setTrimmedVideoFile(dataURL);
@@ -180,6 +169,8 @@ export default function Home() {
       setTrimIsProcessing(false);
     }
   };
+
+  if (isLoading) return <span>Loading...</span>;
 
   return loaded ? (
     <main className="flex justify-center w-full">
@@ -194,7 +185,7 @@ export default function Home() {
           control={
             <div className="u-center">
               <button
-                onClick={handleTrim}
+                onClick={trimVideo}
                 className="btn bg-purple-500 p-2"
                 disabled={trimIsProcessing}
               >
@@ -204,24 +195,25 @@ export default function Home() {
           }
           thumbnails={thumbnails}
         />
-
-        <VideoFilePicker
-          handleChange={handleChange}
-          showVideo={!!inputVideoFile}
-        >
-          <video
-            className="w-3/4"
-            src={inputVideoFile ? URL : null}
-            autoPlay
-            controls
-            muted
-            onLoadedMetadata={handleLoadedData}
+        <div className="flex">
+          <VideoFilePicker
+            handleChange={handleChange}
+            showVideo={!!inputVideoFile}
+          >
+            <video
+              className="w-3/4"
+              src={inputVideoFile ? URL : null}
+              autoPlay
+              controls
+              muted
+              onLoadedMetadata={handleLoadedData}
+            />
+          </VideoFilePicker>
+          <OutputVideo
+            videoSrc={trimmedVideoFile}
+            handleDownload={() => helpers.download(trimmedVideoFile)}
           />
-        </VideoFilePicker>
-        <OutputVideo
-          videoSrc={trimmedVideoFile}
-          handleDownload={() => helpers.download(trimmedVideoFile)}
-        />
+        </div>
       </div>
     </main>
   ) : (
