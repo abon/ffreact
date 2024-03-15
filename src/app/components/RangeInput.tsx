@@ -1,6 +1,7 @@
-import React from "react";
 import Image from "next/image";
 import * as helpers from "../utils/utils";
+import { StaticImport } from "next/dist/shared/lib/get-img-props";
+import { Key } from "react";
 
 export default function RangeInput({
   thumbnails,
@@ -26,19 +27,23 @@ export default function RangeInput({
     );
   }
 
-  console.log(thumbnails)
+  console.log(thumbnails);
 
   return (
     <>
       <div className="range_pack">
         <div className="image_box">
-          {thumbnails.map((imgURL, id) => (
-            <img
-              src={imgURL}
-              alt={`sample_video_thumbnail_${id}`}
-              key={id}
-            />
-          ))}
+          {thumbnails.map(
+            (imgURL: string | StaticImport, id: Key | null | undefined) => (
+              <Image
+                src={imgURL}
+                alt={`sample_video_thumbnail_${id}`}
+                key={id}
+                width={30}
+                height={30}
+              />
+            )
+          )}
 
           <div
             className="clip_box"

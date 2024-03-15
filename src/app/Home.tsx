@@ -79,8 +79,12 @@ export default function Home() {
     setURL(await helpers.readFileAsBase64(file));
   };
 
-  const getThumbnails = async ({ duration }: any) => {
-    const arrayOfImageURIs = [];
+  const getThumbnails = async ({
+    duration,
+  }: {
+    duration: number;
+  }): Promise<string[]> => {
+    const arrayOfImageURIs: string[] = [];
     const MAX_NUMBER_OF_IMAGES = 15;
     const NUMBER_OF_IMAGES = Math.min(duration, MAX_NUMBER_OF_IMAGES);
     const offset = Math.ceil(duration / NUMBER_OF_IMAGES);
@@ -107,12 +111,12 @@ export default function Home() {
           "00:00:1.000",
           "-vf",
           `scale=150:-1`,
-          `img${i}.png`
+          `img${i}.png`,
         ]);
 
-        const data = ffmpeg.readFile(`img${i}.png`);
-        const blob:any = new Blob([data.buffer] , { type: "image/png" }) as any;
-        const dataURI = await helpers.readFileAsBase64(blob);
+        const data: any = ffmpeg.readFile(`img${i}.png`);
+        const blob: any = new Blob([data.buffer], { type: "image/png" });
+        const dataURI: any = await helpers.readFileAsBase64(blob);
         arrayOfImageURIs.push(dataURI);
         // await ffmpeg.deleteFile(`img${i}.png`);
       }
@@ -200,7 +204,7 @@ export default function Home() {
           }
           thumbnails={thumbnails}
         />
-        
+
         <VideoFilePicker
           handleChange={handleChange}
           showVideo={!!inputVideoFile}
@@ -218,9 +222,7 @@ export default function Home() {
           videoSrc={trimmedVideoFile}
           handleDownload={() => helpers.download(trimmedVideoFile)}
         />
-       
       </div>
-
     </main>
   ) : (
     <button
