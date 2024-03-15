@@ -111,7 +111,7 @@ export default function Home() {
         ]);
 
         const data = ffmpeg.readFile(`img${i}.png`);
-        const blob = new Blob([data.buffer], { type: "image/png" }) as any;
+        const blob:any = new Blob([data.buffer] , { type: "image/png" }) as any;
         const dataURI = await helpers.readFileAsBase64(blob);
         arrayOfImageURIs.push(dataURI);
         // await ffmpeg.deleteFile(`img${i}.png`);
