@@ -201,7 +201,7 @@ export default function Home() {
             showVideo={!!inputVideoFile}
           >
             <video
-              className="w-3/4"
+              className="w-72"
               src={inputVideoFile ? URL : null}
               autoPlay
               controls

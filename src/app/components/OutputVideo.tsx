@@ -3,12 +3,11 @@ const OutputVideo = ({ handleDownload, videoSrc }: any) => {
     <div className="flex flex-col">
       <div className="w-7/12">
         <video src={videoSrc} autoPlay controls muted />
+        <button onClick={handleDownload} className="btn bg-orange-500 p-2">
+          {" "}
+          Download
+        </button>
       </div>
-
-      <button onClick={handleDownload} className="btn bg-orange-500 p-2">
-        {" "}
-        Download
-      </button>
     </div>
   ) : null;
 };
