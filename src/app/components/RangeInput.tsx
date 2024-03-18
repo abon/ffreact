@@ -1,7 +1,7 @@
 import Image from "next/image";
 import * as helpers from "../utils/utils";
 import { StaticImport } from "next/dist/shared/lib/get-img-props";
-import { Key } from "react";
+import { Key, useEffect } from "react";
 
 export default function RangeInput({
   thumbnails,
@@ -16,9 +16,8 @@ export default function RangeInput({
   const RANGE_MAX = 100;
 
   if (!thumbnails.length && !loading) {
-    return null;
+    return "no data";
   }
-
   if (loading) {
     return (
       <center>
@@ -33,17 +32,16 @@ export default function RangeInput({
     <>
       <div className="range_pack">
         <div className="image_box">
-          {thumbnails.map(
-            (imgURL: string | StaticImport, id: Key | null | undefined) => (
-              <Image
-                src={imgURL}
-                alt={`sample_video_thumbnail_${id}`}
-                key={id}
-                width={30}
-                height={30}
-              />
-            )
-          )}
+          {thumbnails.map((thumbnail: any, id: string) => (
+            <Image
+              src={thumbnail.url}
+              alt={`sample_video_thumbnail_${id}`}
+              key={id}
+              width={30}
+              height={30}
+              className="bg-green-300"
+            />
+          ))}
 
           <div
             className="clip_box"

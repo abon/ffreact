@@ -31,7 +31,8 @@ const readFileAsBase64 = async (file: any) => {
       resolve(reader.result);
     };
     reader.onerror = reject;
-    reader.readAsDataURL(file);
+    if (!file) return null;
+    reader?.readAsDataURL(file);
   });
 };
 

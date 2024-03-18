@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
@@ -46,23 +46,9 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  const transcode = async () => {
-    const ffmpeg = ffmpegRef.current;
-    // u can use 'https://ffmpegwasm.netlify.app/video/video-15s.avi' to download the video to public folder for testing
-    await ffmpeg.writeFile(
-      "input.avi",
-      await fetchFile(
-        "https://raw.githubusercontent.com/ffmpegwasm/testdata/master/video-15s.avi"
-      )
-    );
-    await ffmpeg.exec(["-i", "input.avi", "output.mp4"]);
-    const data = (await ffmpeg.readFile("output.mp4")) as any;
-    if (videoRef.current)
-      // @ts-ignore
-      videoRef.current.src = URL.createObjectURL(
-        new Blob([data.buffer], { type: "video/mp4" })
-      );
-  };
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleUpdateRange = (func: any) => {
     return ({ target: { value } }: any) => {
@@ -72,9 +58,9 @@ export default function Home() {
 
   const handleChange = async (e: any) => {
     let file = e.target.files[0];
+    console.log(e);
     console.log(file);
     setInputVideoFile(file);
-    // @ts-ignore
     setURL(await helpers.readFileAsBase64(file));
   };
 
@@ -172,7 +158,7 @@ export default function Home() {
 
   if (isLoading) return <span>Loading...</span>;
 
-  return loaded ? (
+  return (
     <main className="flex justify-center w-full">
       <div className="flex flex-col">
         <RangeInput
@@ -216,12 +202,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  ) : (
-    <button
-      className="flex justify-center items-center bg-green-800 p-5"
-      onClick={load}
-    >
-      Press to load FFmpeg
-    </button>
   );
 }
