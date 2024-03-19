@@ -7,13 +7,23 @@ import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { CgArrowsExchangeAltV } from "react-icons/cg";
 import Draggable from "react-draggable";
 
-import { FileInput, Grid, Stack } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Card,
+  FileInput,
+  Grid,
+  Stack,
+  Group,
+  Text,
+} from "@mantine/core";
 import VideoUploader from "./components/VideoUploader";
 import * as helpers from "./utils/utils";
 import RangeInput from "./components/RangeInput";
 import OutputVideo from "./components/OutputVideo";
 
 import { IoIosDownload } from "react-icons/io";
+import Image from "next/image";
 
 const Main = () => {
   const router = useRouter();
@@ -42,6 +52,16 @@ const Main = () => {
 
   const [thumbnails, setThumbnails] = useState([]);
   const [thumbnailIsProcessing, setThumbnailIsProcessing] = useState(false);
+
+  const [overlayPrompt, setOverlayPrompt] = useState(false);
+
+  const handleRemoveOverlay = () => {
+    setOverlayPrompt(false);
+  };
+
+  const handlePutOverlay = () => {
+    setOverlayPrompt(true);
+  };
 
   const load = async () => {
     const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
@@ -196,28 +216,58 @@ const Main = () => {
     <div className="h-vh p-10 bg-neutral-100 mt-10 rounded-3xl">
       <Grid>
         <Grid.Col span={12}>
-          <FileInput
-            clearable
-            label="Overlay Image"
-            description="Image formats: png, jpg"
-            placeholder="Your image"
-            accept="image/png, image/jpeg, image/jpg"
-            onChange={onImageUpload}
-          />
-          {/* <button onClick={handleAddOverlayImage}>Apply Overlay Image</button> */}
-
-          {overlayImageFile ? (
-            <Draggable onDrag={handleImagePosition} ref={imageRef}>
-              <img
-                ref={imageRef}
-                src={overlayImageFile ? overlayImageURL : null}
-                alt=""
-                className="h-32 w-32"
+          <Card shadow="sm" radius="md" withBorder w="50%" className="mt-5">
+            <Group mt="md" mb="xs">
+              <Text fw={500}>Add overlay image?</Text>
+              <Badge color="pink">NEW</Badge>
+            </Group>
+            <div className="flex justify-center items-center gap-3 ">
+              <Button
+                bg="blue"
+                fullWidth
+                mt="md"
+                radius="md"
+                onClick={handlePutOverlay}
+              >
+                Sure!
+              </Button>
+              <Button
+                bg="red"
+                fullWidth
+                mt="md"
+                radius="md"
+                onClick={handleRemoveOverlay}
+              >
+                No
+              </Button>
+            </div>
+          </Card>
+          {overlayPrompt && (
+            <div>
+              <FileInput
+                clearable
+                label="Overlay Image"
+                description="Image formats: png, jpg"
+                placeholder="Your image"
+                accept="image/png, image/jpeg, image/jpg"
+                onChange={onImageUpload}
               />
-            </Draggable>
-          ) : (
-            ""
+
+              {overlayImageFile ? (
+                <Draggable onDrag={handleImagePosition} ref={imageRef}>
+                  <img
+                    ref={imageRef}
+                    src={overlayImageFile ? overlayImageURL : null}
+                    alt=""
+                    className="h-32 w-32"
+                  />
+                </Draggable>
+              ) : (
+                ""
+              )}
+            </div>
           )}
+
           <VideoUploader
             onChange={onVideoUpload}
             isVideoUploaded={!!inputVideoFile}
