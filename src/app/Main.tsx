@@ -128,7 +128,7 @@ const Main = () => {
         "-i",
         overlayImageFile.name,
         "-filter_complex",
-        ` overlay=${overlayImagePosition.x}:${overlayImagePosition.y}`,
+        `[1:v]scale=200:200[overlay];[0:v][overlay]overlay=${overlayImagePosition.x}:${overlayImagePosition.y}`,
         "final_output.mp4",
       ]);
 
@@ -199,6 +199,7 @@ const Main = () => {
               label="Overlay Image"
               description="Image formats: png, jpg"
               placeholder="Your image"
+              withAsterisk
               accept="image/png, image/jpeg, image/jpg"
               onChange={onImageUpload}
             />
