@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
-import { MdContentCut } from "react-icons/md";
+import { CgArrowsExchangeAltV } from "react-icons/cg";
 import Draggable from "react-draggable";
 
 import { FileInput, Grid, Stack } from "@mantine/core";
@@ -96,7 +96,7 @@ const Main = () => {
     setThumbnails(thumbs);
   };
 
-  const trimVideo = async () => {
+  const processVideo = async () => {
     const ffmpeg = ffmpegRef.current;
     setTrimIsProcessing(true);
     const start = (trimStartSec / 100) * videoMeta.duration;
@@ -117,10 +117,25 @@ const Main = () => {
         helpers.toTimeString(duration),
         "-c:v",
         "copy",
-        "output.mp4",
+        "trimmed_output.mp4",
       ]);
 
-      const data = (await ffmpeg.readFile("output.mp4")) as any;
+      await ffmpeg.writeFile(
+        overlayImageFile.name,
+        await fetchFile(overlayImageFile)
+      );
+
+      await ffmpeg.exec([
+        "-i",
+        "trimmed_output.mp4",
+        "-i",
+        overlayImageFile.name,
+        "-filter_complex",
+        ` overlay=${overlayImagePosition.x}:${overlayImagePosition.y}`,
+        "final_output.mp4",
+      ]);
+
+      const data = (await ffmpeg.readFile("final_output.mp4")) as any;
       const dataURL = await helpers.readFileAsBase64(
         new Blob([data.buffer], { type: "video/mp4" })
       );
@@ -130,34 +145,6 @@ const Main = () => {
       console.error(error);
     } finally {
       setTrimIsProcessing(false);
-    }
-  };
-
-  const handleAddOverlayImage = async () => {
-    const ffmpeg = ffmpegRef.current;
-    try {
-      await ffmpeg.writeFile(
-        overlayImageFile.name,
-        await fetchFile(overlayImageFile)
-      );
-
-      await ffmpeg.exec([
-        "-i",
-        inputVideoFile.name,
-        "-i",
-        overlayImageFile.name,
-        "-filter_complex",
-        // "[1:v]scale=100:100 [overlay]",
-        ` overlay=${overlayImagePosition.x}:${overlayImagePosition.y}`,
-        "output.mp4",
-      ]);
-      const data = (await ffmpeg.readFile("output.mp4")) as any;
-      const dataURL = await helpers.readFileAsBase64(
-        new Blob([data.buffer], { type: "video/mp4" })
-      );
-      setTrimmedVideoFile(dataURL);
-    } catch (error) {
-      console.error(error);
     }
   };
 
@@ -217,7 +204,7 @@ const Main = () => {
             accept="image/png, image/jpeg, image/jpg"
             onChange={onImageUpload}
           />
-          <button onClick={handleAddOverlayImage}>Apply Overlay Image</button>
+          {/* <button onClick={handleAddOverlayImage}>Apply Overlay Image</button> */}
 
           {overlayImageFile ? (
             <Draggable onDrag={handleImagePosition} ref={imageRef}>
@@ -256,11 +243,12 @@ const Main = () => {
             control={
               <button
                 className="flex items-center justify-center gap-2 h-full w-full text-white text-xl font-medium  bg-indigo-500 rounded-md p-2 mt-5"
-                onClick={trimVideo}
+                onClick={processVideo}
                 disabled={trimIsProcessing}
               >
-                <MdContentCut />
-                {trimIsProcessing ? "Trimming..." : "Apply "}
+                <CgArrowsExchangeAltV size={30} />
+
+                {trimIsProcessing ? "Processing..." : "Apply"}
               </button>
             }
             thumbnails={thumbnails}
