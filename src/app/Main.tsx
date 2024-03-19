@@ -26,10 +26,13 @@ const Main = () => {
   const [inputVideoFile, setInputVideoFile] = useState<any>(null);
   const [videoMeta, setVideoMeta] = useState<any>(null);
 
-  const [inputImageFile, setInputImageFile] = useState<any>(null);
   const imageRef = useRef(null);
-  const [imageURL, setImageURL] = useState<any>(null);
-  const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 });
+  const [overlayImageURL, setOverlayImageURL] = useState<any>(null);
+  const [overlayImageFile, setOverlayImageFile] = useState<any>(null);
+  const [overlayImagePosition, setOverlayImagePosition] = useState({
+    x: 0,
+    y: 0,
+  });
 
   const [trimIsProcessing, setTrimIsProcessing] = useState(false);
   const [trimmedVideoFile, setTrimmedVideoFile] = useState<any>(null);
@@ -69,8 +72,8 @@ const Main = () => {
 
   const onImageUpload = async (e: any) => {
     console.log(e);
-    setInputImageFile(e);
-    setImageURL(await helpers.readFileAsBase64(e));
+    setOverlayImageFile(e);
+    setOverlayImageURL(await helpers.readFileAsBase64(e));
   };
 
   const handleUpdateRange = (func: any) => {
@@ -130,6 +133,34 @@ const Main = () => {
     }
   };
 
+  const handleAddOverlayImage = async () => {
+    const ffmpeg = ffmpegRef.current;
+    try {
+      await ffmpeg.writeFile(
+        overlayImageFile.name,
+        await fetchFile(overlayImageFile)
+      );
+
+      await ffmpeg.exec([
+        "-i",
+        inputVideoFile.name,
+        "-i",
+        overlayImageFile.name,
+        "-filter_complex",
+        // "[1:v]scale=100:100 [overlay]",
+        ` overlay=${overlayImagePosition.x}:${overlayImagePosition.y}`,
+        "output.mp4",
+      ]);
+      const data = (await ffmpeg.readFile("output.mp4")) as any;
+      const dataURL = await helpers.readFileAsBase64(
+        new Blob([data.buffer], { type: "video/mp4" })
+      );
+      setTrimmedVideoFile(dataURL);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const generateThumbnails = async ({ duration }: { duration: number }) => {
     const generatedThumbnails = [];
     const numThumbnails = 15;
@@ -171,34 +202,35 @@ const Main = () => {
   };
 
   const handleImagePosition = (e: any, data: { x: any; y: any }) => {
-    setOverlayPosition({ x: data.x, y: data.y });
+    setOverlayImagePosition({ x: data.x, y: data.y });
   };
 
   return (
     <div className="h-vh p-10 bg-neutral-100 mt-10 rounded-3xl">
       <Grid>
-        <FileInput
-          clearable
-          label="Overlay Image"
-          description="Image formats: png, jpg"
-          placeholder="Your image"
-          accept="image/png, image/jpeg, image/jpg"
-          onChange={onImageUpload}
-        />
-        {inputImageFile ? (
-          <Draggable onDrag={handleImagePosition}>
-            <img
-              ref={imageRef}
-              src={inputImageFile ? imageURL : null}
-              alt=""
-              className="h-12 w-11"
-            />
-          </Draggable>
-        ) : (
-          ""
-        )}
-
         <Grid.Col span={12}>
+          <FileInput
+            clearable
+            label="Overlay Image"
+            description="Image formats: png, jpg"
+            placeholder="Your image"
+            accept="image/png, image/jpeg, image/jpg"
+            onChange={onImageUpload}
+          />
+          <button onClick={handleAddOverlayImage}>Apply Overlay Image</button>
+
+          {overlayImageFile ? (
+            <Draggable onDrag={handleImagePosition} ref={imageRef}>
+              <img
+                ref={imageRef}
+                src={overlayImageFile ? overlayImageURL : null}
+                alt=""
+                className="h-32 w-32"
+              />
+            </Draggable>
+          ) : (
+            ""
+          )}
           <VideoUploader
             onChange={onVideoUpload}
             isVideoUploaded={!!inputVideoFile}
@@ -213,6 +245,7 @@ const Main = () => {
               onLoadedMetadata={handleLoadedData}
             />
           </VideoUploader>
+
           <RangeInput
             rEnd={trimEndSec}
             rStart={trimStartSec}
