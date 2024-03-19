@@ -1,7 +1,7 @@
+import { Loader } from "@mantine/core";
+
 import Image from "next/image";
 import * as helpers from "../utils/utils";
-import { StaticImport } from "next/dist/shared/lib/get-img-props";
-import { Key, useEffect } from "react";
 
 export default function RangeInput({
   thumbnails,
@@ -15,32 +15,22 @@ export default function RangeInput({
 }: any) {
   const RANGE_MAX = 100;
 
-  if (!thumbnails.length && !loading) {
-    return "no data";
-  }
+  if (!thumbnails.length && !loading) return null;
   if (loading) {
     return (
-      <center>
-        <h2>processing thumbnails.....</h2>
-      </center>
+      <div className="flex justify-center items-center mt-1">
+        <Loader color="blue" />
+      </div>
     );
   }
-
-  console.log(thumbnails);
 
   return (
     <>
       <div className="range_pack">
         <div className="image_box">
           {thumbnails.map((thumbnail: any, id: string) => (
-            <Image
-              src={thumbnail.url}
-              alt={`sample_video_thumbnail_${id}`}
-              key={id}
-              width={30}
-              height={30}
-              className="bg-green-300"
-            />
+            <div key={id} className="w-full h-full bg-teal-50"></div>
+            // <Image src={thumbnail} alt={`thumbnail_${id}` with={20} height={20}/>
           ))}
 
           <div
@@ -80,8 +70,7 @@ export default function RangeInput({
           />
         </div>
       </div>
-
-      {control}
+      <div className="flex justify-center items-center">{control}</div>
     </>
   );
 }

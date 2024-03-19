@@ -1,16 +1,22 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { MdContentCut } from "react-icons/md";
+import Draggable from "react-draggable";
 
-import { Grid, Stack } from "@mantine/core";
+import { FileInput, Grid, Stack } from "@mantine/core";
 import VideoUploader from "./components/VideoUploader";
 import * as helpers from "./utils/utils";
 import RangeInput from "./components/RangeInput";
 import OutputVideo from "./components/OutputVideo";
 
+import { IoIosDownload } from "react-icons/io";
+
 const Main = () => {
+  const router = useRouter();
   const ffmpegRef = useRef(new FFmpeg());
   const [loaded, setLoaded] = useState(false);
   const [URL, setURL] = useState<any>(null);
@@ -19,6 +25,11 @@ const Main = () => {
 
   const [inputVideoFile, setInputVideoFile] = useState<any>(null);
   const [videoMeta, setVideoMeta] = useState<any>(null);
+
+  const [inputImageFile, setInputImageFile] = useState<any>(null);
+  const imageRef = useRef(null);
+  const [imageURL, setImageURL] = useState<any>(null);
+  const [overlayPosition, setOverlayPosition] = useState({ x: 0, y: 0 });
 
   const [trimIsProcessing, setTrimIsProcessing] = useState(false);
   const [trimmedVideoFile, setTrimmedVideoFile] = useState<any>(null);
@@ -56,6 +67,12 @@ const Main = () => {
     setURL(await helpers.readFileAsBase64(e));
   };
 
+  const onImageUpload = async (e: any) => {
+    console.log(e);
+    setInputImageFile(e);
+    setImageURL(await helpers.readFileAsBase64(e));
+  };
+
   const handleUpdateRange = (func: any) => {
     return ({ target: { value } }: any) => {
       func(value);
@@ -87,22 +104,25 @@ const Main = () => {
         inputVideoFile.name,
         await fetchFile(inputVideoFile)
       );
+
       await ffmpeg.exec([
-        "-ss",
-        helpers.toTimeString(start),
         "-i",
         inputVideoFile.name,
+        "-ss",
+        helpers.toTimeString(start),
         "-t",
         helpers.toTimeString(duration),
         "-c:v",
         "copy",
-        "ping.mp4",
+        "output.mp4",
       ]);
-      const data = (await ffmpeg.readFile("ping.mp4")) as any;
+
+      const data = (await ffmpeg.readFile("output.mp4")) as any;
       const dataURL = await helpers.readFileAsBase64(
         new Blob([data.buffer], { type: "video/mp4" })
       );
       setTrimmedVideoFile(dataURL);
+      // router.push("/download");
     } catch (error) {
       console.error(error);
     } finally {
@@ -126,11 +146,12 @@ const Main = () => {
       for (let i = 0; i < imagesCount; i++) {
         await ffmpeg.exec([
           "-i",
-          "input.mp4",
+          "ping.mp4", // intentionally left as ping.mp4
+          // inputVideoFile.name,
           "-ss",
           `${interval * i}`,
-          "-frames:v",
-          "1",
+          "-vf",
+          "fps=1",
           `thumbnail${i}.png`,
         ]);
         const thumbnailData: any = ffmpeg.readFile(`thumbnail${i}.png`);
@@ -149,10 +170,34 @@ const Main = () => {
     return generatedThumbnails;
   };
 
-  console.log(thumbnails);
+  const handleImagePosition = (e: any, data: { x: any; y: any }) => {
+    setOverlayPosition({ x: data.x, y: data.y });
+  };
+
   return (
     <div className="h-vh p-10 bg-neutral-100 mt-10 rounded-3xl">
       <Grid>
+        <FileInput
+          clearable
+          label="Overlay Image"
+          description="Image formats: png, jpg"
+          placeholder="Your image"
+          accept="image/png, image/jpeg, image/jpg"
+          onChange={onImageUpload}
+        />
+        {inputImageFile ? (
+          <Draggable onDrag={handleImagePosition}>
+            <img
+              ref={imageRef}
+              src={inputImageFile ? imageURL : null}
+              alt=""
+              className="h-12 w-11"
+            />
+          </Draggable>
+        ) : (
+          ""
+        )}
+
         <Grid.Col span={12}>
           <VideoUploader
             onChange={onVideoUpload}
@@ -160,7 +205,7 @@ const Main = () => {
             meta={videoMeta}
           >
             <video
-              className="rounded-lg"
+              className="rounded-lg mt-4"
               src={inputVideoFile ? URL : null}
               autoPlay
               controls
@@ -176,18 +221,18 @@ const Main = () => {
             loading={thumbnailIsProcessing}
             videoMeta={videoMeta}
             control={
-              <div className="u-center">
-                <button
-                  onClick={trimVideo}
-                  className="btn bg-purple-500 p-2"
-                  disabled={trimIsProcessing}
-                >
-                  {trimIsProcessing ? "Trimming..." : "Trim video"}
-                </button>
-              </div>
+              <button
+                className="flex items-center justify-center gap-2 h-full w-full text-white text-xl font-medium  bg-indigo-500 rounded-md p-2 mt-5"
+                onClick={trimVideo}
+                disabled={trimIsProcessing}
+              >
+                <MdContentCut />
+                {trimIsProcessing ? "Trimming..." : "Apply "}
+              </button>
             }
             thumbnails={thumbnails}
           />
+
           <OutputVideo
             videoSrc={trimmedVideoFile}
             handleDownload={() => helpers.download(trimmedVideoFile)}

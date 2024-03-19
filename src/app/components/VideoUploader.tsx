@@ -27,9 +27,7 @@ const VideoUploader = ({
         accept="video/mp4, video/avi, video/mov"
         onChange={onChange}
       />
-      {isVideoUploaded && (
-        <div className="grid justify-center items-start mt-5">{children}</div>
-      )}
+      {isVideoUploaded && <>{children}</>}
     </>
   );
 };
