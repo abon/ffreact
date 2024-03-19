@@ -7,30 +7,17 @@ import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { CgArrowsExchangeAltV } from "react-icons/cg";
 import Draggable from "react-draggable";
 
-import {
-  Badge,
-  Button,
-  Card,
-  FileInput,
-  Grid,
-  Stack,
-  Group,
-  Text,
-} from "@mantine/core";
+import { FileInput, Grid } from "@mantine/core";
 import VideoUploader from "./components/VideoUploader";
 import * as helpers from "./utils/utils";
 import RangeInput from "./components/RangeInput";
 import OutputVideo from "./components/OutputVideo";
-
-import { IoIosDownload } from "react-icons/io";
-import Image from "next/image";
 
 const Main = () => {
   const router = useRouter();
   const ffmpegRef = useRef(new FFmpeg());
   const [loaded, setLoaded] = useState(false);
   const [URL, setURL] = useState<any>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const messageRef = useRef<HTMLParagraphElement | null>(null);
 
   const [inputVideoFile, setInputVideoFile] = useState<any>(null);
@@ -52,16 +39,6 @@ const Main = () => {
 
   const [thumbnails, setThumbnails] = useState([]);
   const [thumbnailIsProcessing, setThumbnailIsProcessing] = useState(false);
-
-  const [overlayPrompt, setOverlayPrompt] = useState(false);
-
-  const handleRemoveOverlay = () => {
-    setOverlayPrompt(false);
-  };
-
-  const handlePutOverlay = () => {
-    setOverlayPrompt(true);
-  };
 
   const load = async () => {
     const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
