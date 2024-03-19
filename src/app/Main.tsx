@@ -216,57 +216,29 @@ const Main = () => {
     <div className="h-vh p-10 bg-neutral-100 mt-10 rounded-3xl">
       <Grid>
         <Grid.Col span={12}>
-          <Card shadow="sm" radius="md" withBorder w="50%" className="mt-5">
-            <Group mt="md" mb="xs">
-              <Text fw={500}>Add overlay image?</Text>
-              <Badge color="pink">NEW</Badge>
-            </Group>
-            <div className="flex justify-center items-center gap-3 ">
-              <Button
-                bg="blue"
-                fullWidth
-                mt="md"
-                radius="md"
-                onClick={handlePutOverlay}
-              >
-                Sure!
-              </Button>
-              <Button
-                bg="red"
-                fullWidth
-                mt="md"
-                radius="md"
-                onClick={handleRemoveOverlay}
-              >
-                No
-              </Button>
-            </div>
-          </Card>
-          {overlayPrompt && (
-            <div>
-              <FileInput
-                clearable
-                label="Overlay Image"
-                description="Image formats: png, jpg"
-                placeholder="Your image"
-                accept="image/png, image/jpeg, image/jpg"
-                onChange={onImageUpload}
-              />
+          <div>
+            <FileInput
+              clearable
+              label="Overlay Image"
+              description="Image formats: png, jpg"
+              placeholder="Your image"
+              accept="image/png, image/jpeg, image/jpg"
+              onChange={onImageUpload}
+            />
 
-              {overlayImageFile ? (
-                <Draggable onDrag={handleImagePosition} ref={imageRef}>
-                  <img
-                    ref={imageRef}
-                    src={overlayImageFile ? overlayImageURL : null}
-                    alt=""
-                    className="h-32 w-32"
-                  />
-                </Draggable>
-              ) : (
-                ""
-              )}
-            </div>
-          )}
+            {overlayImageFile ? (
+              <Draggable onDrag={handleImagePosition} ref={imageRef}>
+                <img
+                  ref={imageRef}
+                  src={overlayImageFile ? overlayImageURL : null}
+                  alt=""
+                  className="h-32 w-32"
+                />
+              </Draggable>
+            ) : (
+              ""
+            )}
+          </div>
 
           <VideoUploader
             onChange={onVideoUpload}
